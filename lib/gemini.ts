@@ -87,8 +87,9 @@ export async function extractIntent(
   description: string
 ): Promise<IntentResult> {
   const client = getClient();
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const model = client.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: modelName,
     systemInstruction: INTENT_SYSTEM_PROMPT,
     generationConfig: {
       responseMimeType: "application/json",
@@ -118,8 +119,9 @@ export async function generateRecommendation(
   compatibility: CompatibilityResult
 ): Promise<RecommendationResult> {
   const client = getClient();
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const model = client.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: modelName,
     systemInstruction: RECOMMEND_SYSTEM_PROMPT,
     generationConfig: {
       responseMimeType: "application/json",
