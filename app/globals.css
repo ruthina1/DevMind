@@ -5,45 +5,45 @@
 
 /* ── CSS Custom Properties ──────────────────────────────────────────────── */
 :root {
-  /* Surface colors */
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #111118;
-  --bg-tertiary: #16161f;
-  --bg-card: rgba(22, 22, 31, 0.7);
-  --bg-card-hover: rgba(30, 30, 42, 0.8);
-  --bg-glass: rgba(15, 15, 25, 0.6);
-  --bg-input: rgba(20, 20, 32, 0.8);
+  /* Linear Design System - Surface colors */
+  --bg-primary: #010102;
+  --bg-secondary: #0f1011;
+  --bg-tertiary: #141516;
+  --bg-card: #0f1011;
+  --bg-card-hover: #141516;
+  --bg-glass: #0f1011;
+  --bg-input: #0f1011;
 
-  /* Border colors */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(99, 102, 241, 0.3);
-  --border-glow: rgba(99, 102, 241, 0.6);
+  /* Linear Design System - Border colors */
+  --border-subtle: #23252a;
+  --border-default: #34343a;
+  --border-accent: #34343a;
+  --border-glow: #5e69d1;
 
-  /* Text colors */
-  --text-primary: #f0f0f5;
-  --text-secondary: #9595a8;
-  --text-tertiary: #5e5e73;
-  --text-accent: #a78bfa;
+  /* Linear Design System - Text colors */
+  --text-primary: #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-tertiary: #8a8f98;
+  --text-accent: #5e6ad2;
 
-  /* Accent palette */
-  --accent-indigo: #6366f1;
-  --accent-purple: #a855f7;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
+  /* Linear Design System - Accent palette */
+  --accent-indigo: #5e6ad2;
+  --accent-purple: #5e6ad2;
+  --accent-cyan: #5e6ad2;
+  --accent-emerald: #27a644;
+  --accent-amber: #ff9f0a;
+  --accent-rose: #e5484d;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #6366f1, #a855f7);
-  --gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
-  --gradient-surface: linear-gradient(180deg, rgba(22, 22, 31, 0.8), rgba(10, 10, 15, 0.9));
-  --gradient-hero: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%);
+  --gradient-primary: linear-gradient(135deg, #5e6ad2, #828fff);
+  --gradient-glow: linear-gradient(135deg, rgba(94, 106, 210, 0.15), rgba(130, 143, 255, 0.15));
+  --gradient-surface: linear-gradient(180deg, #0f1011, #010102);
+  --gradient-hero: radial-gradient(ellipse at 50% 0%, rgba(94, 106, 210, 0.12) 0%, transparent 60%);
 
   /* Typography */
-  --font-display: "Outfit", system-ui, sans-serif;
+  --font-display: "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-mono: "ui-monospace", "SF Mono", "Menlo", monospace;
 
   /* Spacing */
   --radius-sm: 8px;
