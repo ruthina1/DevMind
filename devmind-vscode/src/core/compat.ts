@@ -61,8 +61,8 @@ export function checkCompatibility(
 
   // For each shared peer dependency, check if all requiring packages
   // can agree on a single version
-  for (const [sharedDep, consumers] of peerDepMap.entries()) {
-    if (consumers.length < 2) continue;
+  peerDepMap.forEach((consumers, sharedDep) => {
+    if (consumers.length < 2) return;
 
     // Check every pair
     for (let i = 0; i < consumers.length; i++) {
@@ -85,7 +85,7 @@ export function checkCompatibility(
         }
       }
     }
-  }
+  });
 
   // Also check if any package's peer deps conflict with another package's
   // actual version (i.e., package A peer-depends on B at range X, but B's
@@ -141,25 +141,7 @@ function findRangeIntersection(
   rangeB: string
 ): boolean {
   try {
-    const parsedA = new semver.Range(rangeA);
-    const parsedB = new semver.Range(rangeB);
-
-    // Test representative versions from range A against range B and vice versa
-    // We check common major versions 0-30 with minor 0 and patch 0
-    for (let major = 0; major <= 30; major++) {
-      for (const minor of [0, 5, 10, 15, 20]) {
-        const testVersion = `${major}.${minor}.0`;
-        if (
-          semver.valid(testVersion) &&
-          semver.satisfies(testVersion, parsedA) &&
-          semver.satisfies(testVersion, parsedB)
-        ) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return semver.intersects(rangeA, rangeB);
   } catch {
     // If ranges are unparseable, assume compatible (benefit of the doubt)
     return true;

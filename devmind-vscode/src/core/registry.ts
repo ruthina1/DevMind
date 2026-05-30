@@ -36,6 +36,14 @@ const REGISTRY_BASE = "https://registry.npmjs.org";
 const DOWNLOADS_BASE = "https://api.npmjs.org/downloads/point/last-week";
 const FETCH_TIMEOUT_MS = 8000;
 
+interface CacheEntry {
+  data: PackageInfo;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function fetchWithTimeout(
@@ -61,6 +69,11 @@ async function fetchWithTimeout(
 export async function fetchPackageInfo(
   packageName: string
 ): Promise<PackageInfo> {
+  const cached = cache.get(packageName);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
   try {
     // Fetch metadata and downloads in parallel
     const [metaRes, dlRes] = await Promise.all([
@@ -88,7 +101,7 @@ export async function fetchPackageInfo(
       weeklyDownloads = dlData.downloads ?? 0;
     }
 
-    return {
+    const result: PackageInfo = {
       name: meta.name ?? packageName,
       version: meta.version ?? "unknown",
       description: meta.description ?? "",
@@ -96,6 +109,15 @@ export async function fetchPackageInfo(
       dependencies: meta.dependencies ?? {},
       weeklyDownloads,
     };
+
+    if (result.version !== "unknown") {
+      cache.set(packageName, {
+        data: result,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      });
+    }
+
+    return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {

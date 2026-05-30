@@ -4,11 +4,20 @@ import { fetchAllPackages } from './core/registry';
 import { checkCompatibility } from './core/compat';
 
 export function activate(context: vscode.ExtensionContext) {
-  let disposable = vscode.commands.registerCommand('devmind.openPanel', () => {
-    DevMindPanel.createOrShow(context.extensionUri);
-  });
+  context.subscriptions.push(
+    vscode.commands.registerCommand('devmind.openPanel', () => {
+      DevMindPanel.createOrShow(context.extensionUri);
+    })
+  );
 
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(
+    vscode.commands.registerCommand('devmind.scanWorkspace', async () => {
+      DevMindPanel.createOrShow(context.extensionUri);
+      if (DevMindPanel.currentPanel) {
+        await DevMindPanel.currentPanel.scanActiveWorkspace();
+      }
+    })
+  );
 }
 
 class DevMindPanel {
@@ -122,6 +131,88 @@ class DevMindPanel {
     terminal.show();
     terminal.sendText(installCommand);
     vscode.window.showInformationMessage("Running installation command in terminal...");
+  }
+
+  public async scanActiveWorkspace() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      vscode.window.showErrorMessage("No workspace folder open.");
+      return;
+    }
+
+    const packageJsonUri = vscode.Uri.joinPath(workspaceFolders[0].uri, 'package.json');
+    try {
+      this._panel.webview.postMessage({ command: 'progress', step: 'intent', label: 'Reading local package.json…' });
+      const doc = await vscode.workspace.openTextDocument(packageJsonUri);
+      const content = JSON.parse(doc.getText());
+      
+      const dependencies = {
+        ...(content.dependencies || {}),
+        ...(content.devDependencies || {})
+      };
+
+      const packageNames = Object.keys(dependencies);
+      if (packageNames.length === 0) {
+        throw new Error("No dependencies found in your package.json.");
+      }
+
+      this._panel.webview.postMessage({ command: 'progress', step: 'registry', label: `Scanning ${packageNames.length} packages from registry…` });
+      const packages = await fetchAllPackages(packageNames);
+      const validPackages = packages.filter((p) => p.version !== "unknown");
+
+      this._panel.webview.postMessage({ command: 'progress', step: 'compat', label: 'Checking compatibility matrix…' });
+      const compatibility = checkCompatibility(validPackages);
+
+      // Create a mock recommendation result for local scan
+      const mockRecommendation = {
+        stack_status: compatibility.isCompatible ? "conflict_free" : "has_warnings",
+        categories: [
+          {
+            name: "Current Project Dependencies",
+            packages: validPackages.map(p => ({
+              name: p.name,
+              version: p.version,
+              reason: "Installed in current project.",
+              weekly_downloads: p.weeklyDownloads
+            }))
+          }
+        ],
+        landmines: [],
+        alternatives: [],
+        install_command: ""
+      };
+
+      this._panel.webview.postMessage({
+        command: 'result',
+        result: {
+          intent: {
+            project_type: "Local Project Scan",
+            frontend_framework: null,
+            backend_framework: null,
+            database: null,
+            key_features: ["Local Workspace Compatibility Audit"],
+            implicit_needs: [],
+            scale: "production",
+            all_candidates: packageNames
+          },
+          registry: {
+            total: packages.length,
+            resolved: validPackages.length,
+            failed: packages.filter((p) => p.error).map((p) => ({
+              name: p.name,
+              error: p.error,
+            })),
+          },
+          compatibility,
+          recommendation: mockRecommendation
+        }
+      });
+
+      vscode.window.showInformationMessage(`Successfully scanned ${packageNames.length} project dependencies!`);
+    } catch (error: any) {
+      this._panel.webview.postMessage({ command: 'error', text: error.message });
+      vscode.window.showErrorMessage("Workspace Scan Failed: " + error.message);
+    }
   }
 
   public dispose() {
