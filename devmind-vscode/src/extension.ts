@@ -136,107 +136,215 @@ class DevMindPanel {
   }
 
   private _update() {
-    this._panel.webview.html = this._getHtmlForWebview();
+    this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, this._extensionUri);
   }
 
-  private _getHtmlForWebview() {
+  private _getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    const toolkitUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.min.js')
+    );
+    const codiconsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css')
+    );
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DevMind</title>
+  <link href="${codiconsUri}" rel="stylesheet" />
+  <script type="module" src="${toolkitUri}"></script>
   <style>
     body {
-      font-family: var(--vscode-font-family);
-      color: var(--vscode-editor-foreground);
+      padding: 0;
+      margin: 0;
       background-color: var(--vscode-editor-background);
-      padding: 20px;
+      color: var(--vscode-editor-foreground);
+      font-family: var(--vscode-font-family);
     }
     .container {
       max-width: 800px;
       margin: 0 auto;
+      padding: 32px 24px;
     }
-    h1 {
-      color: var(--vscode-textPreformat-foreground);
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 24px;
     }
-    textarea {
-      width: 100%;
-      height: 100px;
-      background-color: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border);
-      padding: 10px;
-      margin-bottom: 16px;
-      font-family: var(--vscode-font-family);
-      resize: vertical;
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
     }
-    button {
-      background-color: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
+    .header .codicon {
+      font-size: 28px;
+      color: var(--vscode-textLink-foreground);
+    }
+    .description {
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 24px;
       font-size: 14px;
     }
-    button:hover {
-      background-color: var(--vscode-button-hoverBackground);
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
     }
-    .status {
-      margin-top: 16px;
-      font-style: italic;
-      color: var(--vscode-descriptionForeground);
+    vscode-text-area {
+      width: 100%;
     }
-    .result {
-      margin-top: 24px;
-      border: 1px solid var(--vscode-widget-border);
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #statusContainer {
+      display: none;
+      align-items: center;
+      gap: 12px;
       padding: 16px;
-      border-radius: 4px;
       background-color: var(--vscode-editorWidget-background);
+      border: 1px solid var(--vscode-widget-border);
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+    #statusText {
+      font-weight: 500;
+    }
+    #errorContainer {
+      display: none;
+      padding: 16px;
+      background-color: var(--vscode-inputValidation-errorBackground);
+      border: 1px solid var(--vscode-inputValidation-errorBorder);
+      color: var(--vscode-editorError-foreground);
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+    #resultContainer {
       display: none;
     }
-    .error {
-      color: var(--vscode-errorForeground);
-      margin-top: 16px;
-      display: none;
+    .category-card {
+      margin-bottom: 24px;
     }
-    .pkg-row {
+    .category-card h3 {
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--vscode-widget-border);
+      padding-bottom: 8px;
+    }
+    .package-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background-color: var(--vscode-editorWidget-background);
+      border: 1px solid var(--vscode-widget-border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .package-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+    }
+    .package-name {
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .package-badges {
+      display: flex;
+      gap: 8px;
+    }
+    .package-reason {
+      color: var(--vscode-descriptionForeground);
+      font-size: 13px;
+    }
+    .landmine-card {
+      padding: 12px;
+      background-color: var(--vscode-editorWarning-background);
+      border-left: 4px solid var(--vscode-editorWarning-foreground);
       margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--vscode-widget-border);
+      color: var(--vscode-editor-foreground);
     }
-    .pkg-name {
-      font-weight: bold;
+    .landmine-trigger {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .apply-btn {
-      margin-top: 16px;
-      background-color: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
+    .install-section {
+      margin-top: 32px;
+      padding: 24px;
+      background-color: var(--vscode-editorWidget-background);
+      border: 1px solid var(--vscode-widget-border);
+      border-radius: 6px;
+      text-align: center;
     }
-    .apply-btn:hover {
-      background-color: var(--vscode-button-secondaryHoverBackground);
+    .install-section h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>DevMind</h1>
-    <p>Describe your project idea. Get a perfect, conflict-free pinned stack.</p>
+    <div class="header">
+      <span class="codicon codicon-sparkle"></span>
+      <h1>DevMind AI Dependency Intelligence</h1>
+    </div>
     
-    <textarea id="prompt" placeholder="e.g. realtime collaborative notes app with auth and postgres"></textarea>
-    <br/>
-    <button id="analyzeBtn">Analyze Project</button>
-    
-    <div id="status" class="status"></div>
-    <div id="error" class="error"></div>
-    
-    <div id="result" class="result">
-      <h2 id="resultTitle">Recommended Stack</h2>
-      <div id="packages"></div>
-      <button id="applyBtn" class="apply-btn" style="display:none;">Apply to Workspace</button>
+    <p class="description">
+      Describe your project idea, and DevMind will generate a conflict-free, pinned dependency stack tailored specifically to your needs.
+    </p>
+
+    <div class="input-section">
+      <vscode-text-area id="prompt" rows="3" placeholder="e.g. realtime collaborative notes app with auth and postgres" resize="vertical"></vscode-text-area>
+      <div class="actions">
+        <vscode-button id="analyzeBtn" appearance="primary">
+          <span slot="start" class="codicon codicon-play"></span>
+          Analyze Project
+        </vscode-button>
+      </div>
+    </div>
+
+    <div id="statusContainer">
+      <vscode-progress-ring></vscode-progress-ring>
+      <div id="statusText">Starting analysis...</div>
+    </div>
+
+    <div id="errorContainer"></div>
+
+    <div id="resultContainer">
+      <vscode-panels>
+        <vscode-panel-tab id="tab-1">RECOMMENDED STACK</vscode-panel-tab>
+        <vscode-panel-tab id="tab-2">LANDMINES</vscode-panel-tab>
+        <vscode-panel-view id="view-1">
+          <div id="stackCategories" style="width: 100%; padding-top: 16px;"></div>
+          
+          <div class="install-section">
+            <h3>Ready to build?</h3>
+            <p class="description">Instantly add these dependencies to your active workspace.</p>
+            <vscode-button id="applyBtn" appearance="primary">
+              <span slot="start" class="codicon codicon-terminal"></span>
+              Apply to Workspace
+            </vscode-button>
+          </div>
+        </vscode-panel-view>
+        <vscode-panel-view id="view-2">
+          <div id="landminesContainer" style="width: 100%; padding-top: 16px;">
+            <p class="description">No landmines detected for this stack.</p>
+          </div>
+        </vscode-panel-view>
+      </vscode-panels>
     </div>
   </div>
 
@@ -244,10 +352,12 @@ class DevMindPanel {
     const vscode = acquireVsCodeApi();
     const analyzeBtn = document.getElementById('analyzeBtn');
     const promptInput = document.getElementById('prompt');
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error');
-    const resultDiv = document.getElementById('result');
-    const packagesDiv = document.getElementById('packages');
+    const statusContainer = document.getElementById('statusContainer');
+    const statusText = document.getElementById('statusText');
+    const errorContainer = document.getElementById('errorContainer');
+    const resultContainer = document.getElementById('resultContainer');
+    const stackCategories = document.getElementById('stackCategories');
+    const landminesContainer = document.getElementById('landminesContainer');
     const applyBtn = document.getElementById('applyBtn');
     
     let currentInstallCommand = '';
@@ -257,11 +367,12 @@ class DevMindPanel {
       if (!prompt) return;
       
       analyzeBtn.disabled = true;
-      statusDiv.textContent = 'Starting analysis...';
-      errorDiv.style.display = 'none';
-      resultDiv.style.display = 'none';
-      packagesDiv.innerHTML = '';
-      applyBtn.style.display = 'none';
+      promptInput.disabled = true;
+      
+      errorContainer.style.display = 'none';
+      resultContainer.style.display = 'none';
+      statusContainer.style.display = 'flex';
+      statusText.textContent = 'Extracting project intent...';
       
       vscode.postMessage({
         command: 'analyze',
@@ -278,49 +389,73 @@ class DevMindPanel {
       }
     });
 
+    function formatDownloads(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M/wk';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K/wk';
+      return n + '/wk';
+    }
+
     window.addEventListener('message', event => {
       const message = event.data;
       switch (message.command) {
         case 'progress':
-          statusDiv.textContent = message.label;
+          statusText.textContent = message.label;
           break;
         case 'error':
           analyzeBtn.disabled = false;
-          statusDiv.textContent = '';
-          errorDiv.textContent = message.text;
-          errorDiv.style.display = 'block';
+          promptInput.disabled = false;
+          statusContainer.style.display = 'none';
+          
+          errorContainer.textContent = message.text;
+          errorContainer.style.display = 'block';
           break;
         case 'result':
           analyzeBtn.disabled = false;
-          statusDiv.textContent = 'Analysis complete!';
+          promptInput.disabled = false;
+          statusContainer.style.display = 'none';
           
           const rec = message.result.recommendation;
-          let html = '';
           
+          // Render Stack
+          let html = '';
           rec.categories.forEach(cat => {
+            html += '<div class="category-card">';
             html += '<h3>' + cat.name + '</h3>';
             cat.packages.forEach(pkg => {
-              html += '<div class="pkg-row">';
-              html += '<div><span class="pkg-name">' + pkg.name + '</span> @' + pkg.version + '</div>';
-              html += '<div>' + pkg.reason + '</div>';
+              html += '<div class="package-row">';
+              html += '<div class="package-header">';
+              html += '<div class="package-name"><span class="codicon codicon-package"></span> ' + pkg.name + '</div>';
+              html += '<div class="package-badges">';
+              html += '<vscode-tag>v' + pkg.version + '</vscode-tag>';
+              if (pkg.weekly_downloads) {
+                html += '<vscode-tag>' + formatDownloads(pkg.weekly_downloads) + '</vscode-tag>';
+              }
+              html += '</div></div>';
+              html += '<div class="package-reason">' + pkg.reason + '</div>';
               html += '</div>';
             });
+            html += '</div>';
           });
+          stackCategories.innerHTML = html;
           
+          // Render Landmines
           if (rec.landmines && rec.landmines.length > 0) {
-            html += '<h3 style="color:var(--vscode-editorWarning-foreground);">Landmines</h3>';
+            let lmHtml = '';
             rec.landmines.forEach(mine => {
-              html += '<div style="margin-bottom:8px;"><strong>' + mine.trigger + '</strong>: ' + mine.warning + '</div>';
+              lmHtml += '<div class="landmine-card">';
+              lmHtml += '<div class="landmine-trigger"><span class="codicon codicon-warning"></span> ' + mine.trigger + '</div>';
+              lmHtml += '<div>' + mine.warning + '</div>';
+              lmHtml += '</div>';
             });
+            landminesContainer.innerHTML = lmHtml;
+          } else {
+            landminesContainer.innerHTML = '<p class="description">No landmines detected for this stack.</p>';
           }
           
-          packagesDiv.innerHTML = html;
-          resultDiv.style.display = 'block';
+          resultContainer.style.display = 'block';
           
           if (rec.install_command) {
             currentInstallCommand = rec.install_command;
-            applyBtn.style.display = 'inline-block';
-            applyBtn.textContent = 'Run: ' + rec.install_command;
           }
           break;
       }
