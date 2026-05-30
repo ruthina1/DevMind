@@ -140,211 +140,332 @@ class DevMindPanel {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
-    const toolkitUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.min.js')
-    );
-    const codiconsUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css')
-    );
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DevMind</title>
-  <link href="${codiconsUri}" rel="stylesheet" />
-  <script type="module" src="${toolkitUri}"></script>
   <style>
+    /* Linear Design System Tokens */
+    :root {
+      --colors-primary: #5e6ad2;
+      --colors-primary-hover: #828fff;
+      --colors-on-primary: #ffffff;
+      --colors-ink: #f7f8f8;
+      --colors-ink-muted: #d0d6e0;
+      --colors-ink-subtle: #8a8f98;
+      --colors-canvas: #010102;
+      --colors-surface-1: #0f1011;
+      --colors-surface-2: #141516;
+      --colors-hairline: #23252a;
+      --colors-hairline-strong: #34343a;
+      --colors-semantic-success: #27a644;
+      --colors-semantic-error: #e5484d;
+      
+      --font-sans: "Inter", -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "ui-monospace", "SF Mono", "Menlo", monospace;
+    }
+
     body {
       padding: 0;
       margin: 0;
-      background-color: var(--vscode-editor-background);
-      color: var(--vscode-editor-foreground);
-      font-family: var(--vscode-font-family);
+      background-color: var(--colors-canvas);
+      color: var(--colors-ink);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
     }
+    
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 32px 24px;
+      padding: 48px 24px;
     }
+
+    h1, h2, h3 {
+      font-family: var(--font-sans);
+      color: var(--colors-ink);
+      margin: 0;
+    }
+
     .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 48px;
     }
     .header h1 {
-      margin: 0;
-      font-size: 24px;
+      font-size: 40px;
       font-weight: 600;
+      letter-spacing: -1.0px;
+      line-height: 1.15;
+      margin-bottom: 12px;
     }
-    .header .codicon {
-      font-size: 28px;
-      color: var(--vscode-textLink-foreground);
+    .header p {
+      font-size: 18px;
+      color: var(--colors-ink-muted);
+      letter-spacing: -0.1px;
+      margin: 0;
+      max-width: 600px;
     }
-    .description {
-      color: var(--vscode-descriptionForeground);
-      margin-bottom: 24px;
-      font-size: 14px;
-    }
+
     .input-section {
+      background-color: var(--colors-surface-1);
+      border: 1px solid var(--colors-hairline);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 48px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: 16px;
     }
-    vscode-text-area {
+
+    textarea {
       width: 100%;
+      min-height: 80px;
+      background-color: var(--colors-surface-2);
+      border: 1px solid var(--colors-hairline-strong);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--colors-ink);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      resize: vertical;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .actions {
-      display: flex;
+    textarea:focus {
+      border-color: var(--colors-primary);
+      box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.2);
+    }
+    textarea::placeholder {
+      color: var(--colors-ink-subtle);
+    }
+
+    .btn {
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      background-color: var(--colors-surface-2);
+      color: var(--colors-ink);
+      border: 1px solid var(--colors-hairline-strong);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: background-color 0.2s;
     }
+    .btn:hover {
+      background-color: var(--colors-hairline);
+    }
+    .btn-primary {
+      background-color: var(--colors-primary);
+      color: var(--colors-on-primary);
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: var(--colors-primary-hover);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     #statusContainer {
       display: none;
       align-items: center;
       gap: 12px;
-      padding: 16px;
-      background-color: var(--vscode-editorWidget-background);
-      border: 1px solid var(--vscode-widget-border);
-      border-radius: 6px;
-      margin-bottom: 24px;
+      padding: 16px 24px;
+      background-color: var(--colors-surface-1);
+      border: 1px solid var(--colors-hairline);
+      border-radius: 8px;
+      margin-bottom: 48px;
     }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--colors-hairline-strong);
+      border-top-color: var(--colors-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
     #statusText {
+      font-size: 14px;
       font-weight: 500;
+      color: var(--colors-ink);
     }
+
     #errorContainer {
       display: none;
-      padding: 16px;
-      background-color: var(--vscode-inputValidation-errorBackground);
-      border: 1px solid var(--vscode-inputValidation-errorBorder);
-      color: var(--vscode-editorError-foreground);
-      border-radius: 6px;
+      padding: 16px 24px;
+      background-color: rgba(229, 72, 77, 0.1);
+      border: 1px solid rgba(229, 72, 77, 0.2);
+      color: var(--colors-semantic-error);
+      border-radius: 8px;
+      margin-bottom: 48px;
+      font-size: 14px;
+    }
+
+    #resultContainer { display: none; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
       margin-bottom: 24px;
+      border-bottom: 1px solid var(--colors-hairline);
+      padding-bottom: 16px;
     }
-    #resultContainer {
-      display: none;
+    .tab {
+      background: transparent;
+      border: none;
+      color: var(--colors-ink-subtle);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      transition: all 0.2s;
     }
+    .tab.active {
+      background-color: var(--colors-surface-2);
+      color: var(--colors-ink);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     .category-card {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
     .category-card h3 {
-      margin-bottom: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--vscode-widget-border);
-      padding-bottom: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--colors-ink-subtle);
+      margin-bottom: 16px;
     }
+
     .package-row {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 12px;
-      background-color: var(--vscode-editorWidget-background);
-      border: 1px solid var(--vscode-widget-border);
-      border-radius: 6px;
-      margin-bottom: 8px;
+      background-color: var(--colors-surface-1);
+      border: 1px solid var(--colors-hairline);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
     }
     .package-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 8px;
     }
     .package-name {
-      font-weight: 600;
-      font-size: 15px;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--colors-ink);
+    }
+    .badges {
       display: flex;
-      align-items: center;
       gap: 8px;
     }
-    .package-badges {
-      display: flex;
-      gap: 8px;
+    .badge {
+      background-color: var(--colors-surface-2);
+      color: var(--colors-ink-muted);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
     }
     .package-reason {
-      color: var(--vscode-descriptionForeground);
-      font-size: 13px;
+      font-size: 14px;
+      color: var(--colors-ink-muted);
+      line-height: 1.5;
     }
+
     .landmine-card {
-      padding: 12px;
-      background-color: var(--vscode-editorWarning-background);
-      border-left: 4px solid var(--vscode-editorWarning-foreground);
-      margin-bottom: 8px;
-      color: var(--vscode-editor-foreground);
+      background-color: var(--colors-surface-1);
+      border: 1px solid var(--colors-hairline);
+      border-left: 3px solid #ff9f0a;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
     }
     .landmine-trigger {
-      font-weight: 600;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--colors-ink);
+      margin-bottom: 8px;
     }
-    .install-section {
-      margin-top: 32px;
-      padding: 24px;
-      background-color: var(--vscode-editorWidget-background);
-      border: 1px solid var(--vscode-widget-border);
-      border-radius: 6px;
+    .landmine-warning {
+      font-size: 14px;
+      color: var(--colors-ink-muted);
+    }
+
+    .cta-banner {
+      background-color: var(--colors-surface-1);
+      border: 1px solid var(--colors-hairline);
+      border-radius: 12px;
+      padding: 48px;
       text-align: center;
+      margin-top: 64px;
     }
-    .install-section h3 {
-      margin-top: 0;
+    .cta-banner h3 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
       margin-bottom: 16px;
+    }
+    .cta-banner p {
+      color: var(--colors-ink-muted);
+      font-size: 16px;
+      margin-bottom: 24px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <span class="codicon codicon-sparkle"></span>
-      <h1>DevMind AI Dependency Intelligence</h1>
+      <h1>DevMind Intelligence</h1>
+      <p>Describe your project idea and get a conflict-free, pinned dependency stack generated in seconds.</p>
     </div>
-    
-    <p class="description">
-      Describe your project idea, and DevMind will generate a conflict-free, pinned dependency stack tailored specifically to your needs.
-    </p>
 
     <div class="input-section">
-      <vscode-text-area id="prompt" rows="3" placeholder="e.g. realtime collaborative notes app with auth and postgres" resize="vertical"></vscode-text-area>
-      <div class="actions">
-        <vscode-button id="analyzeBtn" appearance="primary">
-          <span slot="start" class="codicon codicon-play"></span>
-          Analyze Project
-        </vscode-button>
+      <textarea id="prompt" placeholder="e.g. realtime collaborative notes app with auth and postgres"></textarea>
+      <div>
+        <button id="analyzeBtn" class="btn btn-primary">Generate Stack</button>
       </div>
     </div>
 
     <div id="statusContainer">
-      <vscode-progress-ring></vscode-progress-ring>
+      <div class="spinner"></div>
       <div id="statusText">Starting analysis...</div>
     </div>
 
     <div id="errorContainer"></div>
 
     <div id="resultContainer">
-      <vscode-panels>
-        <vscode-panel-tab id="tab-1">RECOMMENDED STACK</vscode-panel-tab>
-        <vscode-panel-tab id="tab-2">LANDMINES</vscode-panel-tab>
-        <vscode-panel-view id="view-1">
-          <div id="stackCategories" style="width: 100%; padding-top: 16px;"></div>
-          
-          <div class="install-section">
-            <h3>Ready to build?</h3>
-            <p class="description">Instantly add these dependencies to your active workspace.</p>
-            <vscode-button id="applyBtn" appearance="primary">
-              <span slot="start" class="codicon codicon-terminal"></span>
-              Apply to Workspace
-            </vscode-button>
-          </div>
-        </vscode-panel-view>
-        <vscode-panel-view id="view-2">
-          <div id="landminesContainer" style="width: 100%; padding-top: 16px;">
-            <p class="description">No landmines detected for this stack.</p>
-          </div>
-        </vscode-panel-view>
-      </vscode-panels>
+      <div class="tabs">
+        <button class="tab active" data-target="view-1">Recommended Stack</button>
+        <button class="tab" data-target="view-2">Landmines</button>
+      </div>
+      
+      <div id="view-1" class="tab-content active">
+        <div id="stackCategories"></div>
+        
+        <div class="cta-banner">
+          <h3>Ready to build?</h3>
+          <p>Instantly add these dependencies to your active workspace.</p>
+          <button id="applyBtn" class="btn btn-primary" style="display:none;">Apply to Workspace</button>
+        </div>
+      </div>
+      
+      <div id="view-2" class="tab-content">
+        <div id="landminesContainer">
+          <p style="color: var(--colors-ink-subtle);">No landmines detected for this stack.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -359,8 +480,19 @@ class DevMindPanel {
     const stackCategories = document.getElementById('stackCategories');
     const landminesContainer = document.getElementById('landminesContainer');
     const applyBtn = document.getElementById('applyBtn');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
     
     let currentInstallCommand = '';
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.target).classList.add('active');
+      });
+    });
 
     analyzeBtn.addEventListener('click', () => {
       const prompt = promptInput.value.trim();
@@ -424,11 +556,11 @@ class DevMindPanel {
             cat.packages.forEach(pkg => {
               html += '<div class="package-row">';
               html += '<div class="package-header">';
-              html += '<div class="package-name"><span class="codicon codicon-package"></span> ' + pkg.name + '</div>';
-              html += '<div class="package-badges">';
-              html += '<vscode-tag>v' + pkg.version + '</vscode-tag>';
+              html += '<div class="package-name">' + pkg.name + '</div>';
+              html += '<div class="badges">';
+              html += '<span class="badge">v' + pkg.version + '</span>';
               if (pkg.weekly_downloads) {
-                html += '<vscode-tag>' + formatDownloads(pkg.weekly_downloads) + '</vscode-tag>';
+                html += '<span class="badge">' + formatDownloads(pkg.weekly_downloads) + '</span>';
               }
               html += '</div></div>';
               html += '<div class="package-reason">' + pkg.reason + '</div>';
@@ -443,13 +575,13 @@ class DevMindPanel {
             let lmHtml = '';
             rec.landmines.forEach(mine => {
               lmHtml += '<div class="landmine-card">';
-              lmHtml += '<div class="landmine-trigger"><span class="codicon codicon-warning"></span> ' + mine.trigger + '</div>';
-              lmHtml += '<div>' + mine.warning + '</div>';
+              lmHtml += '<div class="landmine-trigger">' + mine.trigger + '</div>';
+              lmHtml += '<div class="landmine-warning">' + mine.warning + '</div>';
               lmHtml += '</div>';
             });
             landminesContainer.innerHTML = lmHtml;
           } else {
-            landminesContainer.innerHTML = '<p class="description">No landmines detected for this stack.</p>';
+            landminesContainer.innerHTML = '<p style="color: var(--colors-ink-subtle);">No landmines detected for this stack.</p>';
           }
           
           resultContainer.style.display = 'block';
